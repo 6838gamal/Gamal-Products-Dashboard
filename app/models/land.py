@@ -2,10 +2,10 @@
 from datetime import datetime, timezone
 from sqlalchemy import String, Text, Integer, Boolean, Float, DateTime, JSON
 from sqlalchemy.orm import Mapped, mapped_column
-from app.database.base import Base
+from app.database.lands_base import LandsBase
 
 
-class Land(Base):
+class Land(LandsBase):
     __tablename__ = "lands"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
