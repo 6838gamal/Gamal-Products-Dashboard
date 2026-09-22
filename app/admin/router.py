@@ -14,6 +14,7 @@ from app.models.user import User
 from app.models.article import Article, Category, Tag
 from app.models.project import Project
 from app.models.service import Service
+from app.models.land import Land
 from app.models.product import Product, Order
 from app.models.message import Message
 from app.models.analytics import PageView
@@ -38,6 +39,7 @@ async def dashboard(request: Request, db: AsyncSession = Depends(get_db),
         "articles": (await db.execute(select(func.count()).select_from(Article))).scalar() or 0,
         "projects": (await db.execute(select(func.count()).select_from(Project))).scalar() or 0,
         "services": (await db.execute(select(func.count()).select_from(Service))).scalar() or 0,
+        "lands": (await db.execute(select(func.count()).select_from(Land))).scalar() or 0,
         "products": (await db.execute(select(func.count()).select_from(Product))).scalar() or 0,
         "messages_unread": (await db.execute(select(func.count()).select_from(Message).where(Message.is_read == False))).scalar() or 0,
     }
@@ -316,6 +318,104 @@ async def service_del(sid: int, db: AsyncSession = Depends(get_db),
     if s:
         await db.delete(s); await db.commit()
     return RedirectResponse("/admin/services", status_code=303)
+
+
+# ============ الأراضي والعقارات (Lands / Real Estate) ============
+@router.get("/lands")
+async def lands_admin(request: Request, db: AsyncSession = Depends(get_db),
+                      user: User = Depends(require_admin)):
+    items = (await db.execute(select(Land).order_by(Land.created_at.desc()))).scalars().all()
+    return templates.TemplateResponse("admin/lands_list.html", {
+        "request": request, "items": items, "user": user, "active": "lands",
+    })
+
+
+@router.get("/lands/new")
+@router.get("/lands/{lid}/edit")
+async def land_form(request: Request, lid: int | None = None,
+                    db: AsyncSession = Depends(get_db),
+                    user: User = Depends(require_admin)):
+    l = await db.get(Land, lid) if lid else None
+    return templates.TemplateResponse("admin/land_form.html", {
+        "request": request, "l": l, "user": user, "active": "lands",
+    })
+
+
+@router.post("/lands/save")
+async def land_save(
+        lid: int = Form(0),
+        title: str = Form(...),
+        short_description: str = Form(...),
+        description: str = Form(...),
+        land_type: str = Form(""),
+        purpose: str = Form("sale"),
+        price: float = Form(0),
+        currency: str = Form("SAR"),
+        area: float | None = Form(None),
+        rooms: int | None = Form(None),
+        bathrooms: int | None = Form(None),
+        address: str = Form(""),
+        city: str = Form(""),
+        district: str = Form(""),
+        latitude: float | None = Form(None),
+        longitude: float | None = Form(None),
+        features: str = Form(""),
+        featured: bool = Form(False),
+        is_published: bool = Form(False),
+        cover: UploadFile | None = File(None),
+        db: AsyncSession = Depends(get_db),
+        user: User = Depends(require_admin)):
+    l = await db.get(Land, lid) if lid else Land(slug=slugify(title))
+    l.title = title.strip()
+    l.short_description = short_description.strip()
+    l.description = sanitize_html(description)
+    l.land_type = land_type.strip() or None
+    l.purpose = purpose.strip() or "sale"
+    l.price = price
+    l.currency = currency
+    l.area = area
+    l.rooms = rooms
+    l.bathrooms = bathrooms
+    l.address = address.strip() or None
+    l.city = city.strip() or None
+    l.district = district.strip() or None
+    l.latitude = latitude
+    l.longitude = longitude
+    l.features = [f.strip() for f in features.split("\n") if f.strip()]
+    l.featured = featured
+    l.is_published = is_published
+    if not l.id:
+        l.slug = slugify(title)
+    if cover and cover.filename:
+        l.cover_image = await save_upload(cover, "lands", images_only=True)
+    if not lid:
+        db.add(l)
+    await db.commit()
+    if l.is_published:
+        url = settings.APP_URL + f"/lands/{l.slug}"
+        asyncio.create_task(ping_search_engines(url))
+        asyncio.create_task(google_indexing_request(url))
+    return RedirectResponse("/admin/lands", status_code=303)
+
+
+@router.post("/lands/{lid}/delete")
+async def land_delete(lid: int, db: AsyncSession = Depends(get_db),
+                      user: User = Depends(require_admin)):
+    l = await db.get(Land, lid)
+    if l:
+        await db.delete(l)
+        await db.commit()
+    return RedirectResponse("/admin/lands", status_code=303)
+
+
+@router.post("/lands/{lid}/toggle")
+async def land_toggle(lid: int, db: AsyncSession = Depends(get_db),
+                      user: User = Depends(require_admin)):
+    l = await db.get(Land, lid)
+    if l:
+        l.is_published = not l.is_published
+        await db.commit()
+    return RedirectResponse("/admin/lands", status_code=303)
 
 
 # ============ Products ============
