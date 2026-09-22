@@ -1,0 +1,159 @@
+{% extends 'admin/_layout.html' %}
+{% block heading %}الأراضي والعقارات{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+  <div class="flex items-center gap-2 text-xs text-neutral-500">
+    <span>{{ items | length }} عقار</span>
+    <span>·</span>
+    {% set published = items | selectattr('is_published', 'equalto', true) | list | length %}
+    {% set featured = items | selectattr('featured', 'equalto', true) | list | length %}
+    <span class="text-emerald-400">{{ published }} منشور</span>
+    <span>·</span>
+    <span class="text-gold-400">{{ featured }} مميز</span>
+  </div>
+  <a href="/admin/lands/new"
+     class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gold-500 hover:bg-gold-400
+            text-ink-900 text-sm font-bold transition-colors">
+    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+    </svg>
+    إضافة عقار
+  </a>
+</div>
+
+<div class="rounded-2xl bg-ink-700 border border-white/5 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm" style="min-width:720px">
+      <thead>
+        <tr class="bg-ink-600 text-neutral-500 text-xs uppercase tracking-wider">
+          <th class="px-4 py-3 text-right font-semibold">العقار</th>
+          <th class="px-4 py-3 text-right font-semibold hidden md:table-cell">النوع</th>
+          <th class="px-4 py-3 text-right font-semibold hidden md:table-cell">السعر</th>
+          <th class="px-4 py-3 text-right font-semibold hidden lg:table-cell">المدينة</th>
+          <th class="px-4 py-3 text-center font-semibold">الحالة</th>
+          <th class="px-4 py-3 text-center font-semibold hidden sm:table-cell">التاريخ</th>
+          <th class="px-4 py-3 text-center font-semibold">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-white/[0.04]">
+        {% for it in items %}
+        <tr class="hover:bg-white/[0.02] transition-colors {{ '' if it.is_published else 'bg-white/[0.01]' }}">
+          <!-- العقار -->
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              {% if it.cover_image %}
+              <img src="{{ it.cover_image }}" alt=""
+                   class="size-11 rounded-xl object-cover shrink-0 border border-white/5">
+              {% else %}
+              <div class="size-11 rounded-xl bg-gold-500/10 border border-gold-500/20 grid place-items-center shrink-0">
+                <svg class="size-5 text-gold-500/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4"/>
+                </svg>
+              </div>
+              {% endif %}
+              <div class="min-w-0">
+                <div class="font-medium text-white text-sm truncate max-w-[220px]">{{ it.title }}</div>
+                <div class="text-xs text-neutral-500 mt-0.5 truncate max-w-[220px]">{{ it.short_description }}</div>
+              </div>
+            </div>
+          </td>
+
+          <!-- النوع -->
+          <td class="px-4 py-3 hidden md:table-cell">
+            {% if it.land_type %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-white/5 text-neutral-300 text-xs">{{ it.land_type }}</span>
+            {% endif %}
+            {% if it.purpose %}
+            <span class="inline-flex px-2 py-0.5 rounded-full text-xs ms-1
+                         {{ 'bg-emerald-500/10 text-emerald-400' if it.purpose=='sale' else 'bg-sky-500/10 text-sky-400' }}">
+              {{ 'للبيع' if it.purpose=='sale' else 'للإيجار' }}
+            </span>
+            {% endif %}
+            {% if not it.land_type and not it.purpose %}
+            <span class="text-neutral-600 text-xs">—</span>
+            {% endif %}
+          </td>
+
+          <!-- السعر -->
+          <td class="px-4 py-3 hidden md:table-cell">
+            <div class="text-sm font-medium text-gold-400">{{ "{:,.0f}".format(it.price) }} {{ it.currency }}</div>
+            {% if it.area %}<div class="text-xs text-neutral-500 mt-0.5">{{ it.area }} م²</div>{% endif %}
+          </td>
+
+          <!-- المدينة -->
+          <td class="px-4 py-3 hidden lg:table-cell">
+            {% if it.city %}
+            <div class="text-sm text-neutral-300">{{ it.city }}</div>
+            {% if it.district %}<div class="text-xs text-neutral-500 mt-0.5">{{ it.district }}</div>{% endif %}
+            {% else %}
+            <span class="text-neutral-600 text-xs">—</span>
+            {% endif %}
+          </td>
+
+          <!-- الحالة -->
+          <td class="px-4 py-3 text-center">
+            <div class="flex flex-wrap items-center justify-center gap-1.5">
+              {% if it.is_published %}
+              <span class="inline-flex px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold">منشور</span>
+              {% else %}
+              <span class="inline-flex px-2 py-0.5 rounded-full bg-neutral-700 text-neutral-500 text-xs">مسودة</span>
+              {% endif %}
+              {% if it.featured %}
+              <span class="inline-flex px-2 py-0.5 rounded-full bg-gold-500/10 text-gold-400 text-xs font-semibold">★ مميز</span>
+              {% endif %}
+            </div>
+          </td>
+
+          <!-- التاريخ -->
+          <td class="px-4 py-3 text-center text-neutral-500 text-xs hidden sm:table-cell">{{ it.created_at | fmtdate }}</td>
+
+          <!-- إجراءات -->
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-center gap-2">
+              {% if it.is_published %}
+              <a href="/lands/{{ it.slug }}" target="_blank"
+                 class="text-xs px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 transition-colors"
+                 title="معاينة">◉</a>
+              {% endif %}
+
+              <form method="post" action="/admin/lands/{{ it.id }}/toggle">
+                <button class="text-xs px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 transition-colors"
+                        title="{{ 'إلغاء النشر' if it.is_published else 'نشر' }}">
+                  {{ '◌' if it.is_published else '●' }}
+                </button>
+              </form>
+
+              <a href="/admin/lands/{{ it.id }}/edit"
+                 class="text-xs px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 transition-colors"
+                 title="تعديل">✎</a>
+
+              <form method="post" action="/admin/lands/{{ it.id }}/delete"
+                    onsubmit="return confirm('حذف هذا العقار نهائياً؟')">
+                <button class="text-red-400 hover:text-red-300 text-xs font-medium">حذف</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="px-4 py-14 text-center text-neutral-500">
+            لا توجد عقارات بعد —
+            <a href="/admin/lands/new" class="text-gold-400 hover:text-gold-300">أضف أول عقار</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if items %}
+  <div class="px-4 py-3 border-t border-white/[0.04] text-xs text-neutral-600">
+    {{ items | length }} عقار —
+    {% set drafts = items | rejectattr('is_published', 'equalto', true) | list | length %}
+    <span class="{{ 'text-gold-400' if drafts > 0 else '' }}">{{ drafts }} مسودة</span>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
