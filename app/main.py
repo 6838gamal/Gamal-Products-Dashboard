@@ -30,6 +30,9 @@ from app.models.user import User
 from app.services.vector_mode import detect_vector_mode
 
 
+from app.models.land import Land
+
+
 # ══════════════════════════════════════════════════════════════════════
 # طباعة فورية على stderr — تظهر في كل بيئات النشر (Render/Docker/…)
 # ══════════════════════════════════════════════════════════════════════
