@@ -160,6 +160,9 @@ class Settings(BaseSettings):
     SYNC_DATABASE_URL: str = ""
     DB_USE_SSL: bool = False
 
+
+    LANDS_DB_URL: str = ""
+
     # Connection pool
     DB_POOL_SIZE: int = 3
     DB_POOL_MAX_OVERFLOW: int = 7
