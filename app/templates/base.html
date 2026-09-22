@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="{{ locale() }}" dir="{{ text_dir() }}" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="google-site-verification" content="Q-E4s4_u9y11AAqQKjmboQtWCSzwCOZofFXP9k3keUw" />
+<meta name="theme-color" content="#00AEEF">
+<script>
+(function(){
+  try {
+    var stored = localStorage.getItem('theme');
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) {
+      document.documentElement.classList.add('dark');
+    }
+  } catch (e) {}
+})();
+</script>
+{% set m = meta or {} %}
+<title>{{ m.title or site.name }}</title>
+<meta name="description" content="{{ m.description or site.description }}">
+<meta name="author" content="{{ site.author }}">
+<meta name="robots" content="{{ m.robots or 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' }}">
+{% if m.canonical %}<link rel="canonical" href="{{ m.canonical }}">{% endif %}
+{% if m.og %}
+<meta property="og:type" content="{{ m.og.type }}">
+<meta property="og:title" content="{{ m.og.title }}">
+<meta property="og:description" content="{{ m.og.description }}">
+<meta property="og:url" content="{{ m.og.url }}">
+<meta property="og:image" content="{{ m.og.image }}">
+<meta property="og:site_name" content="{{ m.og.site_name }}">
+<meta property="og:locale" content="{{ m.og.locale }}">
+{% endif %}
+{% if m.twitter %}
+<meta name="twitter:card" content="{{ m.twitter.card }}">
+<meta name="twitter:title" content="{{ m.twitter.title }}">
+<meta name="twitter:description" content="{{ m.twitter.description }}">
+<meta name="twitter:image" content="{{ m.twitter.image }}">
+{% endif %}
+<link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml">
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
+<link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: {
+      fontFamily: {
+        sans: ['Cairo', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Cairo', 'serif'],
+        latin: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      colors: {
+        brand: {
+          50:  '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#22D3EE',
+          500: '#00AEEF',
+          600: '#0284c7',
+          700: '#0369a1',
+          900: '#0F172A',
+        }
+      },
+      boxShadow: {
+        glow: '0 0 40px rgba(0,174,239,0.25)',
+        card: '0 2px 12px rgba(15,23,42,0.06)',
+      },
+    }}
+  }
+</script>
+<link rel="stylesheet" href="/static/css/app.css">
+<script defer src="https://unpkg.com/htmx.org@2.0.3"></script>
+<script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+{% for ld in (jsonld or []) %}
+<script type="application/ld+json">{{ ld | tojson }}</script>
+{% endfor %}
+{% block head_extra %}{% endblock %}
+</head>
+<body class="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans antialiased min-h-screen flex flex-col transition-colors"
+      x-data="{ menu:false }">
+{% include 'partials/nav.html' %}
+<main class="flex-1">
+{% block content %}{% endblock %}
+</main>
+{% include 'partials/footer.html' %}
+{% include 'partials/ai_chat.html' %}
+</body>
+</html>
