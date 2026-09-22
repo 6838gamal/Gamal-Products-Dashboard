@@ -108,6 +108,15 @@ tailwind.config = {
       المشاريع
     </a>
 
+    <a href="/admin/lands" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='lands' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/>
+      </svg>
+      الأراضي والعقارات
+    </a>
+
     <a href="/admin/services" @click="sideOpen=false"
        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
               {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='services' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
