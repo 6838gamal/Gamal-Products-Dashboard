@@ -36,6 +36,8 @@ tailwind.config = {
 </head>
 <body class="bg-ink-900 text-neutral-100 font-sans min-h-screen" x-data="{sideOpen:false}">
 
+<!-- ═══════════ ADMIN LAYOUT v3 — LANDS ENABLED ═══════════ -->
+
 <!-- ── Mobile backdrop ── -->
 <div x-show="sideOpen" x-cloak @click="sideOpen=false"
      x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
@@ -108,6 +110,7 @@ tailwind.config = {
       المشاريع
     </a>
 
+    <!-- ═══ الأراضي والعقارات ═══ -->
     <a href="/admin/lands" @click="sideOpen=false"
        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
               {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='lands' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
@@ -286,6 +289,8 @@ tailwind.config = {
   </main>
 
 </div>
+
+<!-- ═══════════ END ADMIN LAYOUT v3 ═══════════ -->
 
 </body>
 </html>
