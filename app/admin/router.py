@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.session import get_db
+from app.database.lands_db import get_lands_db
 from app.services.auth import require_admin
 from app.services.uploads import save_upload
 from app.utils.templates import templates
@@ -34,12 +35,13 @@ router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
 @router.get("")
 @router.get("/")
 async def dashboard(request: Request, db: AsyncSession = Depends(get_db),
+                    lands_db: AsyncSession = Depends(get_lands_db),
                     user: User = Depends(require_admin)):
     counts = {
         "articles": (await db.execute(select(func.count()).select_from(Article))).scalar() or 0,
         "projects": (await db.execute(select(func.count()).select_from(Project))).scalar() or 0,
         "services": (await db.execute(select(func.count()).select_from(Service))).scalar() or 0,
-        "lands": (await db.execute(select(func.count()).select_from(Land))).scalar() or 0,
+        "lands": (await lands_db.execute(select(func.count()).select_from(Land))).scalar() or 0,
         "products": (await db.execute(select(func.count()).select_from(Product))).scalar() or 0,
         "messages_unread": (await db.execute(select(func.count()).select_from(Message).where(Message.is_read == False))).scalar() or 0,
     }
@@ -321,10 +323,11 @@ async def service_del(sid: int, db: AsyncSession = Depends(get_db),
 
 
 # ============ الأراضي والعقارات (Lands / Real Estate) ============
+# ⚠️ يستخدم قاعدة بيانات مستقلة عبر get_lands_db
 @router.get("/lands")
-async def lands_admin(request: Request, db: AsyncSession = Depends(get_db),
+async def lands_admin(request: Request, lands_db: AsyncSession = Depends(get_lands_db),
                       user: User = Depends(require_admin)):
-    items = (await db.execute(select(Land).order_by(Land.created_at.desc()))).scalars().all()
+    items = (await lands_db.execute(select(Land).order_by(Land.created_at.desc()))).scalars().all()
     return templates.TemplateResponse("admin/lands_list.html", {
         "request": request, "items": items, "user": user, "active": "lands",
     })
@@ -333,9 +336,9 @@ async def lands_admin(request: Request, db: AsyncSession = Depends(get_db),
 @router.get("/lands/new")
 @router.get("/lands/{lid}/edit")
 async def land_form(request: Request, lid: int | None = None,
-                    db: AsyncSession = Depends(get_db),
+                    lands_db: AsyncSession = Depends(get_lands_db),
                     user: User = Depends(require_admin)):
-    l = await db.get(Land, lid) if lid else None
+    l = await lands_db.get(Land, lid) if lid else None
     return templates.TemplateResponse("admin/land_form.html", {
         "request": request, "l": l, "user": user, "active": "lands",
     })
@@ -363,9 +366,9 @@ async def land_save(
         featured: bool = Form(False),
         is_published: bool = Form(False),
         cover: UploadFile | None = File(None),
-        db: AsyncSession = Depends(get_db),
+        lands_db: AsyncSession = Depends(get_lands_db),
         user: User = Depends(require_admin)):
-    l = await db.get(Land, lid) if lid else Land(slug=slugify(title))
+    l = await lands_db.get(Land, lid) if lid else Land(slug=slugify(title))
     l.title = title.strip()
     l.short_description = short_description.strip()
     l.description = sanitize_html(description)
@@ -389,8 +392,8 @@ async def land_save(
     if cover and cover.filename:
         l.cover_image = await save_upload(cover, "lands", images_only=True)
     if not lid:
-        db.add(l)
-    await db.commit()
+        lands_db.add(l)
+    await lands_db.commit()
     if l.is_published:
         url = settings.APP_URL + f"/lands/{l.slug}"
         asyncio.create_task(ping_search_engines(url))
@@ -399,22 +402,22 @@ async def land_save(
 
 
 @router.post("/lands/{lid}/delete")
-async def land_delete(lid: int, db: AsyncSession = Depends(get_db),
+async def land_delete(lid: int, lands_db: AsyncSession = Depends(get_lands_db),
                       user: User = Depends(require_admin)):
-    l = await db.get(Land, lid)
+    l = await lands_db.get(Land, lid)
     if l:
-        await db.delete(l)
-        await db.commit()
+        await lands_db.delete(l)
+        await lands_db.commit()
     return RedirectResponse("/admin/lands", status_code=303)
 
 
 @router.post("/lands/{lid}/toggle")
-async def land_toggle(lid: int, db: AsyncSession = Depends(get_db),
+async def land_toggle(lid: int, lands_db: AsyncSession = Depends(get_lands_db),
                       user: User = Depends(require_admin)):
-    l = await db.get(Land, lid)
+    l = await lands_db.get(Land, lid)
     if l:
         l.is_published = not l.is_published
-        await db.commit()
+        await lands_db.commit()
     return RedirectResponse("/admin/lands", status_code=303)
 
 
